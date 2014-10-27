@@ -1,0 +1,16 @@
+{
+  "name": "bootstrap-feedback",
+  "version": "0.0.1",
+  "devDependencies": {
+    "grunt": "~0",
+    "grunt-contrib-clean": "~0",
+    "grunt-contrib-coffee": "~0",
+    "grunt-contrib-connect": "~0",
+    "grunt-contrib-copy": "~0",
+    "grunt-contrib-less": "~0.10",
+    "grunt-contrib-watch": "~0",
+    "grunt-bower-task": "~0",
+    "grunt-open": "~0",
+    "load-grunt-tasks": "~0"
+  }
+}

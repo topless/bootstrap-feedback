@@ -1,0 +1,84 @@
+
+/* Overriding original css to play well along with Bootstrap */
+
+@import "../../ext/less/font-awesome/font-awesome";
+@import "../../ext/less/bootstrap/bootstrap";
+
+@fa-font-path:   "/dist/font/font-awesome";
+@icon-font-path: "/dist/font/bootstrap/";
+
+@zindex-feedback: 1100;  // Bootstrap goes to 1050
+
+body {
+  min-height: 400px;
+}
+
+.feedback-select {
+  display: none;
+  border: 1px solid black;
+  bottom: 100px;
+  right: 100px;
+  position: absolute;
+  width: 540px;
+  height: 330px;
+  padding: 20px;
+  background-color: white;
+  cursor: move;
+  z-index: @zindex-feedback;
+  .user-select(none);
+  label { padding-top: 8px; }
+  button { .btn; .btn-default; }
+}
+
+.feedback-canvas {
+  border: 1px solid green;
+  position: absolute;
+  top: 0;
+  left: 0;
+  // -webkit-touch-callout: none;
+  // -webkit-user-select: none;
+  // -khtml-user-select: none;
+  // -moz-user-select: none;
+  // -ms-user-select: none;
+  user-select: none;
+
+}
+
+/* The visible button to trigger feedback */
+.feedback-btn {
+  .btn;
+  .btn-default;
+  position: fixed;
+  bottom: -3px;
+  right: 60px;
+  padding: 10px;
+  z-index: @zindex-feedback;
+}
+
+/* This is what appears when in hightlight and blackout mode to delete a shape*/
+.feedback-delete-btn {
+  display: none;
+  cursor: pointer;
+  position: absolute;
+  color: @brand-danger;
+  z-index: @zindex-feedback;
+  &:hover {
+    color: @gray;
+  }
+}
+
+.feedback-close {
+  cursor: pointer;
+  position: absolute;
+  color: @headings-color;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  font-size: 1.4em;
+  font-weight: bold;
+  opacity: 0.65;
+  &:hover {
+    opacity: 1;
+  }
+}
