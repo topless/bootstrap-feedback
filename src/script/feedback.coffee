@@ -1,28 +1,26 @@
-# rectangle x, y, width, height
-
 class Shape
+
   settings:
     lineWidth   : 2
     fillStyle   : 'yellow'
     strokeStyle : 'green'
 
-  constructor: (@rect) ->
+
+  constructor: (@x, @y, @width, @height) ->
+    console.log "New shape: ", @x, @y, @width, @height
+
 
   isHovered: (idx, x, y) ->
-    if x > @rect.x and
-    x < @rect.x + @rect.width and
-    y > @rect.y and
-    y < @rect.y + @rect.height
-      console.log "Shape idx", idx
-      $('.feedback-delete-btn')
-        .css('left', @rect.x + @rect.width - 11)
-        .css('top', @rect.y - 14)
-        .data('shape', idx)
-      console.log $('.feedback-delete-btn').data('shape')
+    if x > @x and
+    x < @x + @width and
+    y > @y and
+    y < @y + @height
+      console.log "I am hovering button with idx: ", idx
+
 
   draw: (ctx) ->
     ctx.beginPath()
-    ctx.rect(@rect.x, @rect.y, @rect.width, @rect.height)
+    ctx.rect(@x, @y, @width, @height)
     ctx.lineWidth = @settings.lineWidth
     ctx.fillStyle = @settings.fillStyle
     ctx.fill()
@@ -31,12 +29,14 @@ class Shape
 
 
 class FeedbackCanvas
+
   settings:
     minWidth    : 30
     minHeight   : 30
     lineWidth   : 2
     fillStyle   : 'yellow'
     strokeStyle : 'green'
+
 
   constructor: (options) ->
     @drawing = false
@@ -46,18 +46,48 @@ class FeedbackCanvas
     @listen()
     @init()
 
+
   init: ->
     @setSize()
     @canvas.show()
     @drawAll()
-    $('.feedback-delete-btn')
-      .show()
-      .on 'click', (event) ->
-        console.log @
-        console.log @shapes[$('.feedback-delete-btn').data('shape')]
-        console.log @shapes.length
-        @shapes.slice(parseInt($('.feedback-delete-btn').data('shape')), 1)
-        console.log @shapes.length
+
+
+  listen: ->
+    $(window).on 'resize', => @init()
+    $(window).on('remove:shape', @removeShape)
+    @canvas.on 'mousedown', @onMouseDown
+    @canvas.on 'mouseup', @onMouseUp
+    @canvas.on 'mousemove', @onMouseMove
+
+
+  onMouseDown: (event) =>
+    # only left clicks
+    return if event.which isnt 1
+    @centerX = event.pageX
+    @centerY = event.pageY
+    @ctx.beginPath()
+    @drawing = true
+
+
+  onMouseMove: (event) =>
+    currentX = event.pageX
+    currentY = event.pageY
+
+    for shape, idx in @shapes
+      shape.isHovered(idx, currentX, currentY)
+
+    if @drawing
+      @draw(@centerX, @centerY, currentX, currentY)
+
+
+  onMouseUp: (event) =>
+    console.log "@shapes.length: ", @shapes.length
+    @drawing = false
+    width = event.pageX - @centerX
+    height = event.pageY - @centerY
+    @shapes.push(new Shape(@centerX, @centerY, width, height))
+
 
   removeShape: (event, rect) =>
     for shape, idx in @shapes
@@ -66,63 +96,28 @@ class FeedbackCanvas
         @drawAll()
 
 
-  listen: ->
-    $(window).on 'resize', => @init()
-
-    $(window).on('remove:shape', @removeShape)
-
-    @canvas.on 'mousedown', (event) =>
-      return if event.which isnt 1 # only left clicks
-      @centerX = event.pageX
-      @centerY = event.pageY
-      # begins new line
-      @ctx.beginPath()
-      @drawing = true
-
-    @canvas.on 'mousemove', (event) =>
-      currentX = event.pageX
-      currentY = event.pageY
-
-      for shape, idx in @shapes
-        shape.isHovered(idx, currentX, currentY)
-
-      if @drawing
-        @draw(@centerX, @centerY, currentX, currentY)
-
-    @canvas.on 'mouseup', (event) =>
-      @drawing = false
-      sizeX = event.pageX - @centerX
-      sizeY = event.pageY - @centerY
-
-      # if sizeX < @settings.minWidth then sizeX = @settings.minWidth
-      # if sizeY < @settings.minHeight then sizeX = @settings.minHeight
-
-      @shapes.unshift new Shape(
-        x: @centerX
-        y: @centerY
-        width: sizeX
-        height: sizeY
-      )
-
-
   setSize: ->
     @canvas[0].width = parseInt $('body').width()
     @canvas[0].height = parseInt $('body').height()
 
-  # canvas reset
+
   reset: ->
     @canvas[0].width = @canvas[0].width
     @drawAll()
 
+
   drawAll: ->
     return unless @shapes.length > 0
-    shape.draw(@ctx) for shape in @shapes
+    for shape in @shapes
+      console.log "Drawing shape, ", shape
+      shape.draw(@ctx)
+
 
   draw: (startX, startY, currentX, currentY) ->
     @reset()
-    sizeX = currentX - startX
-    sizeY = currentY - startY
-    @ctx.rect(@centerX, @centerY, sizeX, sizeY)
+    width = currentX - startX
+    height = currentY - startY
+    @ctx.rect(@centerX, @centerY, width, height)
     @ctx.lineWidth = @settings.lineWidth
     @ctx.fillStyle = @settings.fillStyle
     @ctx.fill()
@@ -133,10 +128,9 @@ class FeedbackCanvas
 bootstrapFeedback = (options) ->
 
   settings = $.extend(
+    feedbackButton       : '.feedback-btn'
     html2canvasURL       : '//cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js'
     initButtonText       : 	'Send feedback'
-    feedbackButton       : '.feedback-btn'
-
     post:
       ajaxURL  : ''    # Your server url to send data.
       pageUrl  : true  # Url of the page sending feedback.
@@ -192,8 +186,14 @@ bootstrapFeedback = (options) ->
       </div>
     """
 
-  isHtml2CanvasLoaded = false
+  isHtml2CanvasLoaded: false
   $body = $('body')
+
+
+  init: ->
+    $body.append(templates.button)
+    $body.append(templates.select)
+    @actions()
 
 
   close: ->
@@ -201,34 +201,27 @@ bootstrapFeedback = (options) ->
     $('.feedback-canvas').hide()
 
 
-  init: ->
-    $body.append(templates.button)
-    $body.append(templates.deleteBtn)
-    $body.append(templates.select)
-    @actions()
-
-
-  getHtml2canvas: ->
-    return unless not isHtml2CanvasLoaded
-    $.getScript(settings.html2canvasURL, =>
-      isHtml2CanvasLoaded = true
-      @injectCanvas()
-    )
-
-
-  injectCanvas: ->
-    $body.append(templates.canvas)
-    new FeedbackCanvas(element: $('.feedback-canvas'))
-
-
   actions: ->
+    $('.feedback-close').on 'click', => @close()
+
     $('.feedback-btn').on 'click', =>
-      @getHtml2canvas()
-      $('.feedback-select').drags()
-      $('.feedback-select').show()
+      @getHtml2Canvas()
+      $('.feedback-select').drags().show()
       $('.feedback-canvas').show()
 
-    $('.feedback-close').on 'click', => @close()
+    $('.feedback-delete-btn')
+      .show()
+      .on 'click', (event) =>
+        console.log @
+
+
+  getHtml2Canvas: ->
+    return unless not @isHtml2CanvasLoaded
+    $.getScript(settings.html2canvasURL, =>
+      @isHtml2CanvasLoaded = true
+      $body.append(templates.canvas)
+      window.bf = new FeedbackCanvas(element: $('.feedback-canvas'))
+    )
 
 
 $ ->
