@@ -37,6 +37,12 @@ class FeedbackCanvas
     fillStyle   : 'yellow'
     strokeStyle : 'green'
 
+  templates:
+    deleteBtn: """
+      <a href="#" class="feedback-delete-btn" data-shape="-1">
+        <i class="fa fa-2x fa-close"></i>
+      </a>
+    """
 
   constructor: (options) ->
     @drawing = false
@@ -78,7 +84,7 @@ class FeedbackCanvas
       shape.isHovered(idx, currentX, currentY)
 
     if @drawing
-      @draw(@centerX, @centerY, currentX, currentY)
+      @drawMouse(@centerX, @centerY, currentX, currentY)
 
 
   onMouseUp: (event) =>
@@ -87,6 +93,7 @@ class FeedbackCanvas
     width = event.pageX - @centerX
     height = event.pageY - @centerY
     @shapes.push(new Shape(@centerX, @centerY, width, height))
+    @canvas.append(@templates.deleteBtn)
 
 
   removeShape: (event, rect) =>
@@ -109,11 +116,10 @@ class FeedbackCanvas
   drawAll: ->
     return unless @shapes.length > 0
     for shape in @shapes
-      console.log "Drawing shape, ", shape
       shape.draw(@ctx)
 
 
-  draw: (startX, startY, currentX, currentY) ->
+  drawMouse: (startX, startY, currentX, currentY) ->
     @reset()
     width = currentX - startX
     height = currentY - startY
@@ -144,11 +150,6 @@ bootstrapFeedback = (options) ->
     """
     canvas: """
       <canvas class="feedback-canvas"></canvas>
-    """
-    deleteBtn: """
-      <a href="#" class="feedback-delete-btn" data-shape="-1">
-        <i class="fa fa-2x fa-close"></i>
-      </a>
     """
     select: """
       <div class="feedback-select">
